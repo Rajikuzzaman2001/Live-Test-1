@@ -1,265 +1,192 @@
+
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const ProfileApp());
+  runApp(const MyApp());
 }
-
-class ProfileApp extends StatelessWidget {
-  const ProfileApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Profile UI Assignment',
-      home: const ProfileScreen(),
+      title: 'Blood Requests',
+      theme: ThemeData(
+        primarySwatch: Colors.red,
+      ),
+      home: const BloodRequestsScreen(),
     );
   }
 }
 
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+class BloodRequestsScreen extends StatelessWidget {
+  const BloodRequestsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text(
-          'Profile',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Center(
+          child: Text(
+            'Blood Requests',
+            style: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+            ),
+          ),
         ),
-        centerTitle: true,
-        backgroundColor: Colors.blueGrey[700],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          children: [
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              color: Colors.white,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    const CircleAvatar(
-                      radius: 40,
-                      backgroundImage: NetworkImage(
-                        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=300&auto=format&fit=crop',
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Arpon',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    const Text(
-                      'Flutter Developer',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Passionate about creating user-friendly and engaging digital experiences.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12, color: Colors.black54),
-                    ),
-                    const SizedBox(height: 12),
-                    const Divider(color: Colors.grey, thickness: 0.3),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: const [
-                        Icon(Icons.email_outlined, size: 16, color: Colors.grey),
-                        SizedBox(width: 8),
-                        Text(
-                          'mdarpon2045@gmail.com',
-                          style: TextStyle(fontSize: 12, color: Colors.black87),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: const [
-                        Icon(Icons.phone_outlined, size: 16, color: Colors.grey),
-                        SizedBox(width: 8),
-                        Text(
-                          '01571204584',
-                          style: TextStyle(fontSize: 12, color: Colors.black87),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: 36,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                              ),
-                              onPressed: () {},
-                              child: const Text(
-                                'Follow',
-                                style: TextStyle(color: Colors.white, fontSize: 13),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: SizedBox(
-                            height: 36,
-                            child: OutlinedButton(
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: Colors.grey),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                              ),
-                              onPressed: () {},
-                              child: const Text(
-                                'Message',
-                                style: TextStyle(color: Colors.black87, fontSize: 13),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView(
+          children: const [
+            BloodRequestCard(
+              bloodGroup: 'O- Blood Needed',
+              units: '3 Units',
+              location: 'Khulna City Medical College Hospital, KDA Ave...',
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: const [
-                Expanded(child: Divider(thickness: 1)),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10.0),
-                  child: Text(
-                    'Interests',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ),
-                Expanded(child: Divider(thickness: 1)),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildInterestCard(
-                    imageUrl:
-                    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=400&auto=format&fit=crop',
-                    title: 'Travel',
-                    subtitle: 'Exploring new places around the world',
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _buildInterestCard(
-                    imageUrl:
-                    'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=400&auto=format&fit=crop',
-                    title: 'Photography',
-                    subtitle: 'Capturing moments through the lens',
-                  ),
-                ),
-              ],
+            SizedBox(height: 16),
+            BloodRequestCard(
+              bloodGroup: 'O+ Blood Needed',
+              units: '2 Units',
+              location: 'Khulna City Medical College Hospital, KDA Ave...',
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildInterestCard({
-    required String imageUrl,
-    required String title,
-    required String subtitle,
-  }) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: Image.network(
-                imageUrl,
-                height: 80,
-                width: double.infinity,
-                fit: BoxFit.cover,
+class BloodRequestCard extends StatelessWidget {
+  final String bloodGroup;
+  final String units;
+  final String location;
+
+  const BloodRequestCard({
+    super.key,
+    required this.bloodGroup,
+    required this.units,
+    required this.location,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.2),
+                spreadRadius: 2,
+                blurRadius: 5,
+                offset: const Offset(0, 3),
               ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: const TextStyle(fontSize: 10, color: Colors.grey),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              height: 28,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[200],
-                  elevation: 0,
-                  padding: EdgeInsets.zero,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    const Icon(Icons.water_drop, color: Colors.red, size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      units,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
                 ),
-                onPressed: () {},
-                child: const Text(
-                  'View More',
-                  style: TextStyle(
-                    fontSize: 11,
+                const SizedBox(height: 8),
+                Text(
+                  bloodGroup,
+                  style: const TextStyle(
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.blue,
+                    color: Colors.black87,
                   ),
                 ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on, color: Colors.grey, size: 16),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        location,
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 13,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0F172A),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: const Text(
+                      'View Details',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Positioned(
+          top: 0,
+          left: 10,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: const BoxDecoration(
+              color: Colors.red,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(8),
+                bottomRight: Radius.circular(8),
               ),
             ),
-          ],
+            child: const Text(
+              'URGENT',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 }
