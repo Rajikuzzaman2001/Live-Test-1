@@ -1,192 +1,260 @@
-
 import 'package:flutter/material.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart' as p;
 
 void main() {
-  runApp(const MyApp());
+  runApp(const ContactApp());
 }
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+
+class ContactApp extends StatelessWidget {
+  const ContactApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'Contact Management App',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: const ContactHomePage(),
       debugShowCheckedModeBanner: false,
-      title: 'Blood Requests',
-      theme: ThemeData(
-        primarySwatch: Colors.red,
-      ),
-      home: const BloodRequestsScreen(),
     );
   }
 }
 
-class BloodRequestsScreen extends StatelessWidget {
-  const BloodRequestsScreen({super.key});
+class DatabaseHelper {
+  static final DatabaseHelper instance = DatabaseHelper._init();
+  static Database? _database;
+
+  DatabaseHelper._init();
+
+  Future<Database> get database async {
+    if (_database != null) return _database!;
+    _database = await _initDB('contacts.db');
+    return _database!;
+  }
+
+  Future<Database> _initDB(String filePath) async {
+    final dbPath = await getDatabasesPath();
+    final path = p.join(dbPath, filePath);
+
+    return await openDatabase(
+      path,
+      version: 1,
+      onCreate: _createDB,
+    );
+  }
+
+  Future _createDB(Database db, int version) async {
+    await db.execute('''
+      CREATE TABLE contacts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        email TEXT NOT NULL,
+        address TEXT NOT NULL
+      )
+    ''');
+  }
+
+  Future<int> insertContact(Map<String, dynamic> row) async {
+    final db = await instance.database;
+    return await db.insert('contacts', row);
+  }
+
+  Future<List>> getContacts() async {
+    final db = await instance.database;
+    return await db.query('contacts', orderBy: 'name ASC');
+  }
+
+  Future<List>> searchContacts(String keyword) async {
+    final db = await instance.database;
+    return await db.query(
+      'contacts',
+      where: 'name LIKE ?',
+      whereArgs: ['%$keyword%'],
+    );
+  }
+
+  Future<int> updateContact(Map<String, dynamic> row) async {
+    final db = await instance.database;
+    int id = row['id'];
+    return await db.update('contacts', row, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> deleteContact(int id) async {
+    final db = await instance.database;
+    return await db.delete('contacts', where: 'id = ?', whereArgs: [id]);
+  }
+}
+
+class ContactHomePage extends StatefulWidget {
+  const ContactHomePage({super.key});
+
+  @override
+  State<ContactHomePage> createState() => _ContactHomePageState();
+}
+
+class _ContactHomePageState extends State<ContactHomePage> {
+  List> _contacts = [];
+  bool _isLoading = true;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshContacts();
+  }
+
+  void _refreshContacts() async {
+    setState(() => _isLoading = true);
+    final data = await DatabaseHelper.instance.getContacts();
+    setState(() {
+      _contacts = data;
+      _isLoading = false;
+    });
+  }
+
+  void _search(String keyword) async {
+    if (keyword.isEmpty) {
+      _refreshContacts();
+    } else {
+      final data = await DatabaseHelper.instance.searchContacts(keyword);
+      setState(() {
+        _contacts = data;
+      });
+    }
+  }
+
+  void _deleteContact(int id) async {
+    await DatabaseHelper.instance.deleteContact(id);
+    _refreshContacts();
+  }
+
+  void _showForm(Map<String, dynamic>? item) async {
+    final nameController = TextEditingController(text: item?['name'] ?? '');
+    final phoneController = TextEditingController(text: item?['phone'] ?? '');
+    final emailController = TextEditingController(text: item?['email'] ?? '');
+    final addressController = TextEditingController(text: item?['address'] ?? '');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(item == null ? 'Add New Contact' : 'Edit Contact'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Name')),
+              TextField(controller: phoneController, decoration: const InputDecoration(labelText: 'Phone Number'), keyboardType: TextInputType.phone),
+              TextField(controller: emailController, decoration: const InputDecoration(labelText: 'Email'), keyboardType: TextInputType.emailAddress),
+              TextField(controller: addressController, decoration: const InputDecoration(labelText: 'Address')),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameController.text.isEmpty || phoneController.text.isEmpty) return;
+
+              if (item == null) {
+                await DatabaseHelper.instance.insertContact({
+                  'name': nameController.text,
+                  'phone': phoneController.text,
+                  'email': emailController.text,
+                  'address': addressController.text,
+                });
+              } else {
+                await DatabaseHelper.instance.updateContact({
+                  'id': item['id'],
+                  'name': nameController.text,
+                  'phone': phoneController.text,
+                  'email': emailController.text,
+                  'address': addressController.text,
+                });
+              }
+
+              Navigator.pop(context);
+              _refreshContacts();
+            },
+            child: Text(item == null ? 'Save' : 'Update'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Center(
-          child: Text(
-            'Blood Requests',
-            style: TextStyle(
-              color: Colors.black87,
-              fontWeight: FontWeight.bold,
-              fontSize: 22,
-            ),
-          ),
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: const [
-            BloodRequestCard(
-              bloodGroup: 'O- Blood Needed',
-              units: '3 Units',
-              location: 'Khulna City Medical College Hospital, KDA Ave...',
-            ),
-            SizedBox(height: 16),
-            BloodRequestCard(
-              bloodGroup: 'O+ Blood Needed',
-              units: '2 Units',
-              location: 'Khulna City Medical College Hospital, KDA Ave...',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class BloodRequestCard extends StatelessWidget {
-  final String bloodGroup;
-  final String units;
-  final String location;
-
-  const BloodRequestCard({
-    super.key,
-    required this.bloodGroup,
-    required this.units,
-    required this.location,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Container(
-          margin: const EdgeInsets.only(top: 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.2),
-                spreadRadius: 2,
-                blurRadius: 5,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
+        title: const Text('Contact Manager'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    const Icon(Icons.water_drop, color: Colors.red, size: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      units,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  bloodGroup,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on, color: Colors.grey, size: 16),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        location,
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 13,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0F172A),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: const Text(
-                      'View Details',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        Positioned(
-          top: 0,
-          left: 10,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: const BoxDecoration(
-              color: Colors.red,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(8),
-                bottomRight: Radius.circular(8),
-              ),
-            ),
-            child: const Text(
-              'URGENT',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _searchController,
+              onChanged: _search,
+              decoration: InputDecoration(
+                hintText: 'Search contacts by name...',
+                prefixIcon: const Icon(Icons.search),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),
           ),
         ),
-      ],
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _contacts.isEmpty
+          ? const Center(child: Text('No contacts found. Add some!'))
+          : ListView.builder(
+        itemCount: _contacts.length,
+        itemBuilder: (context, index) {
+          final contact = _contacts[index];
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            child: ListTile(
+              leading: CircleAvatar(
+                child: Text(contact['name'][0].toUpperCase()),
+              ),
+              title: Text(contact['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Phone: ${contact['phone']}'),
+                  Text('Email: ${contact['email']}'),
+                  Text('Address: ${contact['address']}'),
+                ],
+              ),
+              isThreeLine: true,
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.blue),
+                    onPressed: () => _showForm(contact),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _deleteContact(contact['id']),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showForm(null),
+        child: const Icon(Icons.add),
+        tooltip: 'Add Contact',
+      ),
     );
   }
 }
